@@ -25,16 +25,17 @@ export const GET = async (request) => {
     );
   }
 
+
   //check if user provide one of 'studentId' or 'courseNo'
   //User must not provide both values, and must not provide nothing
-
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: "Please provide either studentId or courseNo and not both!",
-  //   },
-  //   { status: 400 }
-  // );
+  if(studentId && courseNo)
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Please provide either studentId or courseNo and not both!",
+      },
+      { status: 400 }
+    );
 
   //get all courses enrolled by a student
   if (studentId) {
@@ -59,11 +60,16 @@ export const GET = async (request) => {
   } else if (courseNo) {
     const studentIdList = [];
     for (const enroll of DB.enrollments) {
-      //your code here
+      if(enroll.courseNo === courseNo){
+        studentIdList.push(enroll.studentId)
+      }
     }
 
     const students = [];
-    //your code here
+    for(const studentId of studentIdList){
+    const student = DB.students.find(x => x.studentId === studentId)
+    students.push(student)
+    }
 
     return NextResponse.json({
       ok: true,
@@ -139,17 +145,19 @@ export const DELETE = async (request) => {
   }
 
   const { studentId, courseNo } = body;
+  const foundStudent = DB.students.find((x) => x.studentId === studentId);
+  const foundCourse = DB.courses.find((x) => x.courseNo === courseNo);
+  if (!foundStudent || !foundCourse){
+      return NextResponse.json(
+      {
+        ok: false,
+        message: "Enrollment does not exist",
+      },
+      { status: 404 }
+    );
 
-  //check if studentId and courseNo exist on enrollment
-
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: "Enrollment does not exist",
-  //   },
-  //   { status: 404 }
-  // );
-
+  }
+  DB.enrollments = DB.enrollments.filter( (x) => x.studentId !== studentId || x.courseNo !== courseNo)
   //perform deletion by using splice or array filter
 
   //if code reach here it means deletion is complete
